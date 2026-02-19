@@ -1,4 +1,11 @@
 <x-filament-panels::page>
+    @php
+        $calData = $this->calendarData;
+        $employees = $calData['employees'];
+        $attendanceMap = $calData['attendanceMap'];
+        $holidays = $calData['holidays'] ?? [];
+        $today = now()->startOfDay();
+    @endphp
     <div style="height: calc(100vh - 11rem); overflow: hidden;" class="flex flex-col gap-4">
 
         {{-- Controls Bar --}}
@@ -21,6 +28,7 @@
                     @endforeach
                 </select>
             </div>
+            @if(count($employees) > 0)
             <div class="flex flex-wrap items-center gap-4 text-xs font-medium bg-gray-50 dark:bg-white/5 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/5">
                 <div class="flex items-center gap-1.5">
                     <div class="w-5 h-5 flex items-center justify-center rounded bg-green-100 dark:bg-green-900/30"><x-heroicon-m-check class="w-3.5 h-3.5 text-green-600" /></div>
@@ -39,6 +47,7 @@
                     <span class="text-gray-600 dark:text-gray-400">Off / Holiday</span>
                 </div>
             </div>
+            @endif
         </div>
 
         {{-- Scrollable Table --}}
@@ -50,6 +59,7 @@
                 $holidays = $calData['holidays'] ?? [];
                 $today = now()->startOfDay();
             @endphp
+            @if(count($employees) > 0)
             <table class="w-full text-xs text-left border-separate border-spacing-0">
                 <thead>
                     <tr>
@@ -81,7 +91,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($employees as $employee)
+                    @foreach($employees as $employee)
                         @php $presentCount = 0; $lateCount = 0; $absentCount = 0; @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
                             <td class="px-4 py-3 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-white/5 border-r border-b border-gray-200 dark:border-gray-700">
@@ -138,18 +148,30 @@
                                 <span class="text-red-500 dark:text-red-400">{{ $absentCount }}</span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ count($this->days) + 2 }}" class="p-12 text-center">
-                                <div class="flex flex-col items-center space-y-2">
-                                    <x-heroicon-o-users class="w-12 h-12 text-gray-400" />
-                                    <span class="text-gray-500 text-lg font-medium">No employees found</span>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
+            @else
+            <div class="flex flex-col items-center justify-center h-full py-12 text-center">
+                <div class="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                    <x-heroicon-o-users class="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    {{ __('No Employees Found') }}
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 mb-6 max-w-sm">
+                    {{ __('Adjust the filters above to see attendance records.') }}
+                </p>
+                <x-filament::button
+                    tag="a"
+                    href="{{ \App\Filament\Resources\EmployeeResource::getUrl() }}"
+                    color="gray"
+                    size="sm"
+                >
+                    {{ __('Manage Employees') }}
+                </x-filament::button>
+            </div>
+            @endif
         </div>
     </div>
 </x-filament-panels::page>

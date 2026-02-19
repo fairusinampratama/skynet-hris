@@ -1,4 +1,11 @@
 <x-filament-panels::page>
+    @php
+        $data = $this->employeesAndSchedules;
+        $employees = $data['employees'];
+        $scheduleMap = $data['map'];
+        $holidays = $data['holidays'] ?? [];
+    @endphp
+
     <div style="height: calc(100vh - 11rem); overflow: hidden;" class="flex flex-col gap-4">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 flex-shrink-0">
             <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -9,6 +16,7 @@
                     @foreach(range(now()->year - 1, now()->year + 1) as $y)<option value="{{ $y }}">{{ $y }}</option>@endforeach
                 </select>
             </div>
+            @if(count($employees) > 0)
             <div class="flex flex-wrap items-center gap-6 text-xs font-medium bg-gray-50 dark:bg-white/5 px-4 py-3 rounded-lg border border-gray-200 dark:border-white/5 shadow-sm">
                 <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <div class="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"><div class="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></div></div>
@@ -27,15 +35,11 @@
                     <span>Today</span>
                 </div>
             </div>
+            @endif
         </div>
 
         <div class="flex-1 min-h-0 overflow-auto bg-white rounded-lg shadow ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-            @php
-                $data = $this->employeesAndSchedules;
-                $employees = $data['employees'];
-                $scheduleMap = $data['map'];
-                $holidays = $data['holidays'] ?? [];
-            @endphp
+            @if(count($employees) > 0)
             <table class="w-full text-xs text-left border-separate border-spacing-0">
                 <thead>
                     <tr>
@@ -58,7 +62,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($employees as $employee)
+                    @foreach($employees as $employee)
                         <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
                             <td class="px-4 py-3 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-white/5 border-r border-b border-gray-200 dark:border-gray-700">
                                 <div class="text-sm text-gray-900 dark:text-white font-semibold">{{ $employee->user->name }}</div>
@@ -89,17 +93,31 @@
                                 </td>
                             @endforeach
                         </tr>
-                    @empty
-                        <tr><td colspan="{{ count($this->days) + 1 }}" class="p-12 text-center">
-                            <div class="flex flex-col items-center space-y-2">
-                                <x-heroicon-o-users class="w-12 h-12 text-gray-400" />
-                                <span class="text-gray-500 text-lg font-medium">No employees found</span>
-                                <a href="{{ \App\Filament\Resources\DepartmentResource::getUrl() }}" class="text-primary-600 hover:text-primary-500 hover:underline mt-2">Go to Departments</a>
-                            </div>
-                        </td></tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
+            @else
+            <div class="flex flex-col items-center justify-center h-full py-12 text-center">
+                <div class="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                    <x-heroicon-o-calendar-days class="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    {{ __('No Shift Schedules Found') }}
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 mb-6 max-w-sm">
+                    {{ __('This calendar only shows employees from departments with') }} 
+                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ __('Shift Schedule') }}</span> {{ __('enabled.') }}
+                </p>
+                <x-filament::button
+                    tag="a"
+                    href="{{ \App\Filament\Resources\DepartmentResource::getUrl() }}"
+                    color="gray"
+                    size="sm"
+                >
+                    {{ __('Configure Departments') }}
+                </x-filament::button>
+            </div>
+            @endif
         </div>
     </div>
 </x-filament-panels::page>

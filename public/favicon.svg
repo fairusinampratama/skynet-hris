@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background Circle: Modern and Clean -->
+  <circle cx="256" cy="256" r="256" fill="#1E3A8A"/>
+  
+  <!-- Abstract Person Icon (Head and Body) -->
+  <circle cx="256" cy="180" r="60" fill="#FFFFFF"/>
+  <path d="M256 260c-70 0-130 35-150 90 0 10 5 20 15 20h270c10 0 15-10 15-20-20-55-80-90-150-90z" fill="#FFFFFF"/>
+
+  <!-- Growth/Data Accent (Stylized graph rising) -->
+  <path d="M340 140l50-50M390 90h-40M390 90v40" stroke="#14B8A6" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="390" cy="90" r="15" fill="#14B8A6"/>
+</svg>

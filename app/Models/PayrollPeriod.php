@@ -37,7 +37,7 @@ class PayrollPeriod extends Model
      */
     public function getFormattedPeriodAttribute(): string
     {
-        return date("F", mktime(0, 0, 0, $this->month, 10)) . " {$this->year}";
+        return \Carbon\Carbon::create()->month($this->month)->translatedFormat('F') . " {$this->year}";
     }
 
     /**
