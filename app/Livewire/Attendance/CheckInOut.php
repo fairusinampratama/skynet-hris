@@ -39,7 +39,7 @@ class CheckInOut extends Component
     public function checkStatus()
     {
         $user = Auth::user();
-        $today = Carbon::today();
+        $today = Carbon::today()->toDateString();
         
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
@@ -71,13 +71,13 @@ class CheckInOut extends Component
 
         // 0. Face Recognition Verification
         if (!$employee->face_descriptor) {
-             $this->error_message = 'Face not enrolled. Please complete Face Registration in your Profile first.';
+             $this->dispatch('notify', message: 'Face not enrolled. Please complete Face Registration in your Profile first.', type: 'error');
              return;
         }
 
         if (!$this->faceDescriptor) {
             \Illuminate\Support\Facades\Log::warning('CheckIn Failed: No face descriptor received.', ['user_id' => $user->id]);
-            $this->error_message = 'No face data received. Please ensure your face is clearly visible to the camera.';
+            $this->dispatch('notify', message: 'No face data received. Please ensure your face is clearly visible to the camera.', type: 'error');
             return;
         }
 
@@ -97,7 +97,7 @@ class CheckInOut extends Component
         // Threshold: 0.55 (Standard biometric matching, relaxed from 0.4)
         if ($distance > 0.55) {
             \Illuminate\Support\Facades\Log::warning('CheckIn Failed: Face mismatch.', ['user_id' => $user->id, 'distance' => $distance]);
-            $this->error_message = 'Face verification failed. Data mismatch. Please try again or move closer.';
+            $this->dispatch('notify', message: 'Face verification failed. Data mismatch. Please try again or move closer.', type: 'error');
             return;
         }
         
@@ -126,7 +126,12 @@ class CheckInOut extends Component
         // 2. Late Detection
         $checkInTime = now();
         $formattedTime = $checkInTime->format('H:i:s');
-        $isLate = $service->isLate($employee->id, $checkInTime); // Need to implement employee_id in isLate
+        try {
+             $isLate = $service->isLate($employee->id, $checkInTime);
+        } catch (\Exception $e) {
+             \Illuminate\Support\Facades\Log::error('Late detection error: ' . $e->getMessage());
+             $isLate = false;
+        }
         
         // 3. Save Photo - REMOVED per user request
         // $photoPath = $this->storePhoto($this->photo);
@@ -148,31 +153,37 @@ class CheckInOut extends Component
             'flag_reason' => $flagReason,
         ]);
 
-        session()->flash('message', 'Checked in successfully!');
+        $this->dispatch('notify', message: 'Checked in successfully!', type: 'success');
         $this->checkStatus();
     }
 
     public function checkOut()
     {
-        $user = Auth::user();
-        $employee = $user->employee;
-
-        // Unified: Summary is optional for everyone, or enforce if needed.
-        // For now, we make it optional to be flexible.
-        // if ($this->workSummary) { ... }
-
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', Carbon::today())
-            ->first();
-
-        if ($attendance) {
-            $attendance->update([
-                'check_out_time' => now()->format('H:i:s'),
-                'work_summary' => $this->workSummary,
-            ]);
+        try {
+            $user = Auth::user();
             
-            session()->flash('message', 'Checked out successfully!');
-            $this->checkStatus();
+            // Unified: Summary is optional for everyone, or enforce if needed.
+            // For now, we make it optional to be flexible.
+            // if ($this->workSummary) { ... }
+    
+            $attendance = Attendance::where('user_id', $user->id)
+                ->where('date', Carbon::today()->toDateString())
+                ->first();
+    
+            if ($attendance) {
+                $attendance->update([
+                    'check_out_time' => now()->format('H:i:s'),
+                    'work_summary' => $this->workSummary,
+                ]);
+                
+                $this->dispatch('notify', message: 'Checked out successfully!', type: 'success');
+                $this->checkStatus();
+            } else {
+                $this->dispatch('notify', message: "Could not find today's attendance record to check out.", type: 'error');
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: "Check out failed: " . $e->getMessage(), type: 'error');
+            \Illuminate\Support\Facades\Log::error('CheckOut Error: ' . $e->getMessage());
         }
     }
     

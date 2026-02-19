@@ -14,10 +14,22 @@ use Livewire\Attributes\Computed;
 class AttendanceCalendar extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationLabel = 'Attendance Calendar';
-    protected static ?string $navigationGroup = 'Attendance Management';
     protected static ?int $navigationSort = 4;
-    protected static ?string $title = 'Attendance Calendar';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Attendance Calendar');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Attendance Management');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Attendance Calendar');
+    }
 
     protected static string $view = 'filament.pages.attendance-calendar';
 
@@ -87,5 +99,13 @@ class AttendanceCalendar extends Page
     public function departments()
     {
         return Department::orderBy('name')->get();
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            \App\Filament\Resources\AttendanceResource::getUrl() => __('Attendances'),
+            $this->getUrl() => $this->getTitle(),
+        ];
     }
 }

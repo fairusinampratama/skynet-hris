@@ -11,6 +11,14 @@ class AttendanceAnalytics extends Page
 
     protected static string $view = 'filament.resources.attendance-resource.pages.attendance-analytics';
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            \App\Filament\Resources\AttendanceResource::getUrl() => 'Attendances',
+            $this->getUrl() => $this->getTitle(),
+        ];
+    }
+
     protected function getHeaderWidgets(): array
     {
         return [

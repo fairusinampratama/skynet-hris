@@ -6,8 +6,12 @@ use Filament\Widgets\ChartWidget;
 
 class AttendanceTrendChart extends ChartWidget
 {
-    protected static ?string $heading = 'Monthly Attendance Trends';
     protected static ?int $sort = 1;
+
+    public function getHeading(): string
+    {
+        return __('Monthly Attendance Trends');
+    }
 
     protected function getData(): array
     {
@@ -16,7 +20,7 @@ class AttendanceTrendChart extends ChartWidget
         
         // Loop through 12 months of current year
         for ($m = 1; $m <= 12; $m++) {
-            $monthName = date('M', mktime(0, 0, 0, $m, 1));
+            $monthName = \Carbon\Carbon::create(null, $m)->translatedFormat('M');
             $months[] = $monthName;
             
             // Count for this month
@@ -36,14 +40,14 @@ class AttendanceTrendChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Total Attendance',
+                    'label' => __('Total Attendance'),
                     'data' => $data['total'],
-                    'borderColor' => '#4ade80', // Green
+                    'borderColor' => '#4ade80',
                 ],
                 [
-                    'label' => 'Late Arrivals',
+                    'label' => __('Late Arrivals'),
                     'data' => $data['late'],
-                    'borderColor' => '#f87171', // Red
+                    'borderColor' => '#f87171',
                 ],
             ],
             'labels' => $months,

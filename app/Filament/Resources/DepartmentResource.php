@@ -18,7 +18,17 @@ class DepartmentResource extends Resource
     protected static ?string $model = Department::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
-    protected static ?string $navigationGroup = 'Employee Management';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Employee Management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Department');
+    }
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -26,11 +36,12 @@ class DepartmentResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label(__('Name'))
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('has_shift_schedule')
-                    ->label('Enable Shift Schedule (Roster)')
-                    ->helperText('Enable this for departments that use the rotating shift grid (e.g. Technicians).')
+                    ->label(__('Enable Shift Schedule (Roster)'))
+                    ->helperText(__('Enable this for departments that use the rotating shift grid (e.g. Technicians).'))
                     ->default(false),
             ]);
     }
@@ -40,10 +51,11 @@ class DepartmentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('has_shift_schedule')
-                    ->label('Roster Enabled')
+                    ->label(__('Roster Enabled'))
                     ->boolean()
                     ->sortable(),
             ])

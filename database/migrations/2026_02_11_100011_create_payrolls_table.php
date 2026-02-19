@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('net_salary', 15, 2);
             
             $table->string('pdf_path')->nullable();
+            $table->timestamp('wa_sent_at')->nullable();
             $table->timestamps();
             
             $table->unique(['period_id', 'employee_id']);

@@ -10,29 +10,29 @@ class StatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Present Today', \App\Models\Attendance::whereDate('date', now())->count())
-                ->description('Employees checked in')
+            Stat::make(__('Present Today'), \App\Models\Attendance::whereDate('date', now())->count())
+                ->description(__('Employees checked in'))
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('success'),
             
-            Stat::make('Late Today', \App\Models\Attendance::whereDate('date', now())->where('is_late', true)->count())
-                ->description('Checked in after shift start')
+            Stat::make(__('Late Today'), \App\Models\Attendance::whereDate('date', now())->where('is_late', true)->count())
+                ->description(__('Checked in after shift start'))
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('danger'),
 
-            Stat::make('On Leave', \App\Models\LeaveRequest::where('status', 'approved')
+            Stat::make(__('On Leave'), \App\Models\LeaveRequest::where('status', 'approved')
                 ->whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now())
                 ->count())
-                ->description('Approved leaves active today')
+                ->description(__('Approved leaves active today'))
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('info'),
 
-            Stat::make('Pending Requests', 
+            Stat::make(__('Pending Requests'), 
                 \App\Models\LeaveRequest::where('status', 'pending')->count() + 
                 \App\Models\OvertimeRequest::where('status', 'pending')->count()
             )
-                ->description('Leave & Overtime needing approval')
+                ->description(__('Leave & Overtime needing approval'))
                 ->descriptionIcon('heroicon-m-inbox-stack')
                 ->color('warning'),
         ];

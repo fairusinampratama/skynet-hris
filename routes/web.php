@@ -24,4 +24,13 @@ Route::middleware(['auth'])->group(function () {
         session()->regenerateToken();
         return redirect('/login');
     })->name('logout');
+    // Payroll PDF routes
+    // Payroll PDF routes
+    Route::get('/payroll/{payroll}/view', [\App\Http\Controllers\PayrollPdfController::class, 'view'])
+        ->name('payroll.view');
 });
+
+// Signed route for WhatsApp access (outside auth middleware group if valid signature)
+Route::get('/payroll/{payroll}/stream', [\App\Http\Controllers\PayrollPdfController::class, 'stream'])
+    ->name('payroll.stream')
+    ->middleware('signed');

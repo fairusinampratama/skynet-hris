@@ -16,7 +16,17 @@ class HolidayResource extends Resource
     protected static ?string $model = Holiday::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationGroup = 'Settings';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Settings');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Holiday');
+    }
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -24,11 +34,14 @@ class HolidayResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label(__('Name'))
                     ->required()
                     ->maxLength(255),
                 Forms\Components\DatePicker::make('date')
+                    ->label(__('Date'))
                     ->required(),
                 Forms\Components\TextInput::make('year')
+                    ->label(__('Year'))
                     ->numeric()
                     ->required()
                     ->default(now()->year),
@@ -39,13 +52,14 @@ class HolidayResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('date')->date()->sortable(),
-                TextColumn::make('name')->searchable(),
+                TextColumn::make('date')->label(__('Date'))->date()->sortable(),
+                TextColumn::make('name')->label(__('Name'))->searchable(),
                 TextColumn::make('type')
+                    ->label(__('Type'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'national_holiday' => 'National Holiday',
-                        'cuti_bersama' => 'Cuti Bersama',
+                        'national_holiday' => __('National Holiday'),
+                        'cuti_bersama' => __('Cuti Bersama'),
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
@@ -53,7 +67,7 @@ class HolidayResource extends Resource
                         'cuti_bersama' => 'warning',
                         default => 'gray',
                     }),
-                TextColumn::make('year')->sortable(),
+                TextColumn::make('year')->label(__('Year'))->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('year')
@@ -66,11 +80,11 @@ class HolidayResource extends Resource
             ])
             ->headerActions([
                 Tables\Actions\Action::make('import_holidays')
-                    ->label('Import Holidays')
+                    ->label(__('Import Holidays'))
                     ->icon('heroicon-o-cloud-arrow-down')
                     ->form([
                         Forms\Components\TextInput::make('year')
-                            ->label('Year to Import')
+                            ->label(__('Year to Import'))
                             ->numeric()
                             ->default(now()->year)
                             ->required(),
@@ -86,7 +100,7 @@ class HolidayResource extends Resource
                                 ->send();
                         } catch (\Exception $e) {
                             \Filament\Notifications\Notification::make()
-                                ->title('Import Failed')
+                                ->title(__('Import Failed'))
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();

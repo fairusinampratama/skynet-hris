@@ -56,16 +56,19 @@ class PayrollServiceTest extends TestCase
         $service = new PayrollService();
         $payroll = $service->calculateSalary($employee, $period);
 
+        // Expected calculation with new logic:
         // Basic: 5,000,000
-        // Allowances: 500,000
+        // Allowances: 400,000 (transport) + 500,000 (meal) = 900,000
         // Late Fine: 2 * 50,000 = 100,000
-        // BPJS: 200,000
-        // Total Deductions: 300,000
-        // Net: 5,500,000 - 300,000 = 5,200,000
+        // BPJS Health: 5,000,000 * 1% = 50,000
+        // BPJS Employment: 5,000,000 * 2% = 100,000
+        // PPh21: 5,000,000 * 5% = 250,000
+        // Total Deductions: 100,000 + 50,000 + 100,000 + 250,000 = 500,000
+        // Net: (5,000,000 + 900,000) - 500,000 = 5,400,000
 
         $this->assertEquals(5000000, $payroll->basic_salary);
-        $this->assertEquals(500000, $payroll->total_allowances);
-        $this->assertEquals(300000, $payroll->total_deductions);
-        $this->assertEquals(5200000, $payroll->net_salary);
+        $this->assertEquals(900000, $payroll->total_allowances);
+        $this->assertEquals(500000, $payroll->total_deductions);
+        $this->assertEquals(5400000, $payroll->net_salary);
     }
 }

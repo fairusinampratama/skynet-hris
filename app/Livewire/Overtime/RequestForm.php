@@ -44,7 +44,7 @@ class RequestForm extends Component
 
         $user = Auth::user();
         if (!$user->employee) {
-            session()->flash('error', 'You are not linked to an employee record.');
+            $this->dispatch('notify', message: 'You are not linked to an employee record.', type: 'error');
             return;
         }
 
@@ -56,7 +56,7 @@ class RequestForm extends Component
             'status' => 'pending',
         ]);
 
-        session()->flash('message', 'Overtime request submitted successfully.');
+        $this->dispatch('notify', message: 'Overtime request submitted successfully!', type: 'success');
         $this->reset(['date', 'hours', 'reason']);
         $this->loadRequests();
         $this->dispatch('request-submitted');

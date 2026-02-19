@@ -82,7 +82,7 @@ class RequestForm extends Component
             'status' => 'pending',
         ]);
 
-        session()->flash('message', 'Leave request submitted successfully.');
+        $this->dispatch('notify', message: 'Leave request submitted successfully!', type: 'success');
         $this->reset(['leave_type_id', 'start_date', 'end_date', 'reason', 'attachment']);
         $this->loadBalances();
         $this->dispatch('request-submitted');

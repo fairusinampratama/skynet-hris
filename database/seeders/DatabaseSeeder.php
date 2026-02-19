@@ -11,29 +11,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // 1. Foundation
             RolePermissionSeeder::class,
-            DepartmentSeeder::class,
             CompanySettingSeeder::class,
 
-            // 2. Users & Employees
+            // 2. Users (Super Admin only)
             UserSeeder::class,
-            EmployeeSeeder::class,
-            DefaultShiftSeeder::class,
 
-            // 3. Leave Setup
+            // 3. Configuration
             LeaveTypeSeeder::class,
-            LeaveBalanceSeeder::class,
-
-            // 4. Operational Data
             HolidaySeeder::class,
-            AttendanceSeeder::class,
-            ScheduleSeeder::class,
-
-            // 5. Requests
-            LeaveRequestSeeder::class,
-            OvertimeRequestSeeder::class,
-
-            // 6. Payroll
-            PayrollSeeder::class,
+            
+            // Note: Department, Employee, Attendance, Schedule, Payroll seeders are for demo only and have been disabled.
         ]);
     }
 }

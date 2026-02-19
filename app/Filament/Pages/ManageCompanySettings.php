@@ -9,9 +9,22 @@ use Filament\Forms;
 class ManageCompanySettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Settings';
     protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Company Settings';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Company Settings');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Company Settings');
+    }
     protected static string $view = 'filament.pages.manage-company-settings';
 
     public ?array $data = [];
@@ -26,29 +39,57 @@ class ManageCompanySettings extends Page
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Office Location')
-                    ->description('Set the main office coordinates for employee attendance.')
+                Forms\Components\Section::make(__('Office Location'))
+                    ->description(__('Set the main office coordinates for employee attendance.'))
                     ->schema([
                         Forms\Components\TextInput::make('office_name')
-                            ->default('Main Office')
+                            ->label(__('Office Name'))
+                            ->default(__('Main Office'))
                             ->required(),
                         Forms\Components\Textarea::make('office_address')
+                            ->label(__('Office Address'))
                             ->rows(3),
                         Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('office_lat')
-                                    ->label('Latitude')
+                                    ->label(__('Latitude'))
                                     ->numeric()
                                     ->required(),
                                 Forms\Components\TextInput::make('office_long')
-                                    ->label('Longitude')
+                                    ->label(__('Longitude'))
                                     ->numeric()
                                     ->required(),
                                 Forms\Components\TextInput::make('radius_meters')
-                                    ->label('Radius (meters)')
+                                    ->label(__('Radius (meters)'))
                                     ->numeric()
                                     ->default(100)
                                     ->required(),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make(__('Payroll Settings'))
+                    ->description(__('Configure fixed allowances and deductions used in payroll calculation.'))
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('transport_allowance')
+                                    ->label(__('Transport Allowance (Rp)'))
+                                    ->numeric()
+                                    ->default(400000)
+                                    ->required()
+                                    ->helperText(__('Fixed monthly transport allowance per employee.')),
+                                Forms\Components\TextInput::make('meal_allowance')
+                                    ->label(__('Meal Allowance (Rp)'))
+                                    ->numeric()
+                                    ->default(500000)
+                                    ->required()
+                                    ->helperText(__('Fixed monthly meal allowance per employee.')),
+                                Forms\Components\TextInput::make('late_fine_per_day')
+                                    ->label(__('Late Fine per Day (Rp)'))
+                                    ->numeric()
+                                    ->default(50000)
+                                    ->required()
+                                    ->helperText(__('Deducted for each day employee arrives late.')),
                             ]),
                     ]),
             ])
@@ -62,7 +103,7 @@ class ManageCompanySettings extends Page
         $settings->save();
 
         \Filament\Notifications\Notification::make()
-            ->title('Settings Saved')
+            ->title(__('Settings Saved'))
             ->success()
             ->send();
     }
@@ -71,8 +112,16 @@ class ManageCompanySettings extends Page
     {
         return [
             \Filament\Actions\Action::make('save')
-                ->label('Save Changes')
+                ->label(__('Save Changes'))
                 ->submit('create'),
+        ];
+    }
+
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            $this->getUrl() => $this->getTitle(),
         ];
     }
 }

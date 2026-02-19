@@ -33,7 +33,12 @@ class FaceEnrollment extends Component
 
         $user = Auth::user();
         
-        if ($user->employee && $user->employee->face_descriptor) {
+        if (!$user->employee) {
+            $this->addError('photo', 'No associated employee record found. Please contact administrator.');
+            return;
+        }
+
+        if ($user->employee->face_descriptor) {
             $this->addError('photo', 'Face already registered. Please contact HR to reset.');
             return;
         }

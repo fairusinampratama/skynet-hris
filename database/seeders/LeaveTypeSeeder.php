@@ -11,21 +11,21 @@ class LeaveTypeSeeder extends Seeder
     {
         DB::table('leave_types')->insert([
             [
-                'name' => 'Annual Leave',
+                'name' => 'Cuti Tahunan',
                 'quota' => 12,
                 'requires_attachment' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Sick Leave',
-                'quota' => null, // Unlimited/As needed
+                'name' => 'Cuti Sakit',
+                'quota' => null,
                 'requires_attachment' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Unpaid Leave',
+                'name' => 'Cuti Tanpa Gaji',
                 'quota' => null,
                 'requires_attachment' => false,
                 'created_at' => now(),

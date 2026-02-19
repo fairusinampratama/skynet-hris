@@ -22,6 +22,30 @@ class EmployeeSeeder extends Seeder
         $deptIds = DB::table('departments')->whereIn('name', array_keys($departments))->pluck('id', 'name');
         $faker = \Faker\Factory::create('id_ID');
 
+        // Static Users to link as Employees
+        $staticEmployees = [
+            'sarah@skynet.com' => ['dept' => 'Admin', 'salary' => 7500000],
+            'john@skynet.com'  => ['dept' => 'Admin', 'salary' => 5500000],
+            'mike@skynet.com'  => ['dept' => 'Teknisi', 'salary' => 6000000],
+        ];
+
+        foreach ($staticEmployees as $email => $details) {
+            $user = User::where('email', $email)->first();
+            if ($user) {
+                DB::table('employees')->updateOrInsert(
+                    ['user_id' => $user->id],
+                    [
+                        'department_id' => $deptIds[$details['dept']] ?? null,
+                        'join_date' => '2023-01-01', // Fixed join date for static users
+                        'basic_salary' => $details['salary'],
+                        'face_descriptor' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
         foreach ($departments as $deptName => $salaryRange) {
             for ($i = 1; $i <= 10; $i++) {
                 $uniqueId = strtolower($deptName) . $i;

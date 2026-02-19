@@ -34,16 +34,16 @@ class PayrollSeeder extends Seeder
             ]);
         }
 
-        // Allowance & deduction templates
+        // Allowance & deduction templates - using config values
         $earningTemplates = [
-            ['name' => 'Tunjangan Transport', 'min' => 300000, 'max' => 500000],
-            ['name' => 'Tunjangan Makan',     'min' => 400000, 'max' => 600000],
+            ['name' => 'Tunjangan Transport', 'min' => config('payroll.allowances.transport.min'), 'max' => config('payroll.allowances.transport.max')],
+            ['name' => 'Tunjangan Makan',     'min' => config('payroll.allowances.meal.min'), 'max' => config('payroll.allowances.meal.max')],
         ];
 
         $deductionTemplates = [
-            ['name' => 'BPJS Kesehatan',   'rate' => 0.01],  // 1% of salary
-            ['name' => 'BPJS Ketenagakerjaan', 'rate' => 0.02], // 2% of salary
-            ['name' => 'PPh 21',            'rate' => 0.05],  // 5% simplified
+            ['name' => 'BPJS Kesehatan',   'rate' => config('payroll.deductions.bpjs_health')],
+            ['name' => 'BPJS Ketenagakerjaan', 'rate' => config('payroll.deductions.bpjs_employment')],
+            ['name' => 'PPh 21',            'rate' => config('payroll.deductions.pph21')],
         ];
 
         foreach ($employees as $emp) {
@@ -66,11 +66,16 @@ class PayrollSeeder extends Seeder
 
                 // Add overtime pay if applicable (random, more for Teknisi/NOC)
                 $deptName = $emp->department->name ?? '';
-                $overtimeChance = in_array($deptName, ['Teknisi', 'NOC']) ? 60 : 30;
+                $highOvertimeDepts = config('payroll.high_overtime_departments', ['Teknisi', 'NOC']);
+                $overtimeChance = in_array($deptName, $highOvertimeDepts) 
+                    ? config('payroll.high_overtime_chance', 60)
+                    : config('payroll.normal_overtime_chance', 30);
                 if ($faker->boolean($overtimeChance)) {
-                    $overtimeHours = $faker->randomFloat(1, 1, 8);
-                    $overtimeRate = round($basicSalary / 173, 0); // per-hour rate
-                    $overtimeAmount = round($overtimeHours * $overtimeRate * 1.5, 0);
+                    $overtimeHours = $faker->randomFloat(1, config('payroll.overtime.min_hours'), config('payroll.overtime.max_hours'));
+                    $workHoursPerMonth = config('payroll.work_hours_per_month', 173);
+                    $overtimeMultiplier = config('payroll.overtime_multiplier', 1.5);
+                    $overtimeRate = round($basicSalary / $workHoursPerMonth, 0);
+                    $overtimeAmount = round($overtimeHours * $overtimeRate * $overtimeMultiplier, 0);
                     $totalEarnings += $overtimeAmount;
                     $items[] = [
                         'name' => 'Lembur (' . $overtimeHours . ' jam)',
@@ -92,7 +97,8 @@ class PayrollSeeder extends Seeder
                 }
 
                 // Late penalty (based on month — could be calculated from attendance, but simulated here)
-                $latePenalty = $faker->boolean(25) ? $faker->numberBetween(50000, 300000) : 0;
+                $lateFinePerDay = config('payroll.late_fine_per_day', 50000);
+                $latePenalty = $faker->boolean(25) ? ($faker->numberBetween(1, 6) * $lateFinePerDay) : 0;
                 if ($latePenalty > 0) {
                     $totalDeductions += $latePenalty;
                     $items[] = [

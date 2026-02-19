@@ -5,9 +5,17 @@
 @profile-updated.window="showDrawer = false" 
 @password-updated.window="showDrawer = false" 
 class="max-w-xl mx-auto space-y-6 pb-20 relative">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
+    <x-layouts.mobile-header title="Profile" />
+
+    <!-- Header (Desktop) -->
+    <div class="hidden sm:flex items-center justify-between mb-6">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">{{ now()->format('l, d M Y') }}</p>
+            <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
+        </div>
+        <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
+            {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
+        </div>
     </div>
 
     <!-- User Card -->

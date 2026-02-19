@@ -7,10 +7,22 @@ use Filament\Pages\Page;
 class AttendanceAnalytics extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
-    protected static ?string $navigationLabel = 'Analytics';
-    protected static ?string $navigationGroup = 'Attendance Management';
     protected static ?int $navigationSort = 3;
-    protected static ?string $title = 'Attendance Analytics';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Analytics');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Attendance Management');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Attendance Analytics');
+    }
 
     protected static string $view = 'filament.pages.attendance-analytics';
 
@@ -27,5 +39,13 @@ class AttendanceAnalytics extends Page
     public function getHeaderWidgetsColumns(): int | array
     {
         return 2;
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            \App\Filament\Resources\AttendanceResource::getUrl() => __('Attendances'),
+            $this->getUrl() => $this->getTitle(),
+        ];
     }
 }

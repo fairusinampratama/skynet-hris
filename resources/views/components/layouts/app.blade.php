@@ -36,13 +36,13 @@
                             </div>
                             <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
                                 <a href="{{ route('dashboard') }}" wire:navigate class="{{ request()->routeIs('dashboard') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition duration-150 ease-in-out">
-                                    Dashboard
+                                    {{ __('Dashboard') }}
                                 </a>
                                 <a href="{{ route('attendance') }}" wire:navigate class="{{ request()->routeIs('attendance') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition duration-150 ease-in-out">
-                                    Attendance
+                                    {{ __('Attendance') }}
                                 </a>
                                 <a href="{{ route('requests') }}" wire:navigate class="{{ request()->routeIs('requests') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition duration-150 ease-in-out">
-                                    Requests
+                                    {{ __('Requests') }}
                                 </a>
                             </div>
                         </div>
@@ -59,7 +59,7 @@
                                     </button>
                                 </div>
                                 <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" style="display: none;">
-                                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
+                                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{{ __('Profile') }}</a>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit" class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</button>
@@ -79,6 +79,7 @@
         </main>
         
         @auth
+            <x-layouts.notification />
             @include('components.layouts.bottom-nav')
         @endauth
         

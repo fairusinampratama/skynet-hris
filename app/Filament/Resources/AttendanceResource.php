@@ -19,7 +19,17 @@ class AttendanceResource extends Resource
     protected static ?string $model = Attendance::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
-    protected static ?string $navigationGroup = 'Attendance Management';
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Attendance Management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Attendance');
+    }
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -27,17 +37,18 @@ class AttendanceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('user_id')
+                    ->label(__('Employee'))
                     ->relationship('user', 'name')
                     ->required(),
                 Forms\Components\DatePicker::make('date')
+                    ->label(__('Date'))
                     ->required(),
-                Forms\Components\TimePicker::make('check_in_time'),
-                Forms\Components\TimePicker::make('check_out_time'),
-                // Forms\Components\FileUpload::make('check_in_photo_path') ... REMOVED
-                Forms\Components\Toggle::make('is_late'),
-                Forms\Components\Toggle::make('is_flagged'),
-                Forms\Components\Textarea::make('flag_reason'),
-                Forms\Components\Textarea::make('work_summary'),
+                Forms\Components\TimePicker::make('check_in_time')->label(__('Check In Time')),
+                Forms\Components\TimePicker::make('check_out_time')->label(__('Check Out Time')),
+                Forms\Components\Toggle::make('is_late')->label(__('Late')),
+                Forms\Components\Toggle::make('is_flagged')->label(__('Flagged')),
+                Forms\Components\Textarea::make('flag_reason')->label(__('Flag Reason')),
+                Forms\Components\Textarea::make('work_summary')->label(__('Work Summary')),
             ]);
     }
 
@@ -47,16 +58,21 @@ class AttendanceResource extends Resource
             ->defaultSort('date', 'desc')
             ->columns([
                 TextColumn::make('user.name')
-                    ->label('Employee')
+                    ->label(__('Employee'))
                     ->description(fn (Attendance $record): string => $record->user->employee->department->name ?? '-')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('date')
+                    ->label(__('Date'))
                     ->date()
                     ->sortable(),
                 TextColumn::make('check_in_time')
-                    ->time('H:i'),
+                    ->time('H:i')
+                    ->label(__('Check In Time'))
+                    ->color(fn (Attendance $record) => $record->is_late ? 'danger' : 'gray')
+                    ->description(fn (Attendance $record) => $record->is_late ? __('Late Arrival') : null),
                 TextColumn::make('check_out_time')
+                    ->label(__('Check Out Time'))
                     ->time('H:i'),
                 TextColumn::make('status')
                     ->badge()
@@ -64,8 +80,8 @@ class AttendanceResource extends Resource
                         return $record->is_late ? 'late' : 'on_time';
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'late' => 'Late',
-                        'on_time' => 'On Time',
+                        'late' => __('Late'),
+                        'on_time' => __('On Time'),
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
@@ -75,17 +91,18 @@ class AttendanceResource extends Resource
                     }),
                 // ImageColumn::make('check_in_photo_path') ... REMOVED
                 TextColumn::make('check_in_lat')
-                    ->label('Location')
-                    ->formatStateUsing(fn ($state) => $state ? 'View Map' : '-')
+                    ->label(__('Location'))
+                    ->formatStateUsing(fn ($state) => $state ? __('View Map') : '-')
                     ->url(fn ($record) => $record->check_in_lat ? "https://www.google.com/maps/search/?api=1&query={$record->check_in_lat},{$record->check_in_long}" : null, true)
                     ->color('primary')
                     ->icon('heroicon-o-map-pin'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label(__('Status'))
                     ->options([
-                        'on_time' => 'On Time',
-                        'late' => 'Late',
+                        'on_time' => __('On Time'),
+                        'late' => __('Late'),
                     ])
                     ->query(function (Builder $query, array $data) {
                         if ($data['value'] === 'late') {
@@ -94,8 +111,22 @@ class AttendanceResource extends Resource
                             $query->where('is_late', false);
                         }
                     }),
-                Tables\Filters\Filter::make('today')
-                    ->query(fn (Builder $query): Builder => $query->whereDate('date', now())),
+                Tables\Filters\Filter::make('date_range')
+                    ->form([
+                        Forms\Components\DatePicker::make('from'),
+                        Forms\Components\DatePicker::make('until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                            );
+                    }),
                 Tables\Filters\SelectFilter::make('user')
                     ->relationship('user', 'name'),
             ])

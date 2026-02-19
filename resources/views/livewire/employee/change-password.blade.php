@@ -7,20 +7,20 @@
 
     <form wire:submit="updatePassword">
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2">Current Password</label>
-            <input type="password" wire:model="current_password" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">Current Password</label>
+            <input type="password" wire:model="current_password" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
             @error('current_password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
         </div>
 
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2">New Password</label>
-            <input type="password" wire:model="new_password" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">New Password</label>
+            <input type="password" wire:model="new_password" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
             @error('new_password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
         </div>
 
         <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2">Confirm New Password</label>
-            <input type="password" wire:model="new_password_confirmation" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">Confirm New Password</label>
+            <input type="password" wire:model="new_password_confirmation" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
         </div>
 
         <div class="flex items-center justify-between">

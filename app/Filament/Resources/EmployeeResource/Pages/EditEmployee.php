@@ -49,7 +49,7 @@ class EditEmployee extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Delete removed to prevent accidental data loss
         ];
     }
 }

@@ -6,8 +6,12 @@ use Filament\Widgets\ChartWidget;
 
 class DepartmentPunctualityChart extends ChartWidget
 {
-    protected static ?string $heading = 'Department Punctuality';
     protected static ?int $sort = 2;
+
+    public function getHeading(): string
+    {
+        return __('Department Punctuality');
+    }
 
     protected function getData(): array
     {
@@ -33,12 +37,12 @@ class DepartmentPunctualityChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'On Time (Last 30 Days)',
+                    'label' => __('On Time (Last 30 Days)'),
                     'data' => $onTimeData,
                     'backgroundColor' => '#36A2EB',
                 ],
                 [
-                    'label' => 'Late (Last 30 Days)',
+                    'label' => __('Late (Last 30 Days)'),
                     'data' => $lateData,
                     'backgroundColor' => '#FF6384',
                 ],

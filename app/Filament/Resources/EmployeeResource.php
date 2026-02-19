@@ -18,23 +18,33 @@ class EmployeeResource extends Resource
     protected static ?string $model = Employee::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Employee Management';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Employee Management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Employee');
+    }
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Personal Information')
+                Forms\Components\Section::make(__('Personal Information'))
                     ->schema([
                         // Unified User Fields
                         Forms\Components\TextInput::make('name')
-                            ->label('Full Name')
+                            ->label(__('Full Name'))
                             ->required()
                             ->maxLength(255)
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('email')
-                            ->label('Email Address')
+                            ->label(__('Email Address'))
                             ->email()
                             ->required()
                             ->maxLength(255)
@@ -56,10 +66,13 @@ class EmployeeResource extends Resource
                             ->preload(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Employment Details')
+                Forms\Components\Section::make(__('Employment Details'))
                     ->schema([
                         Forms\Components\DatePicker::make('join_date')
                             ->required(),
+                        Forms\Components\DatePicker::make('resignation_date')
+                            ->label(__('Resignation Date'))
+                            ->helperText('Leave empty if currently employed'),
                         // Role Type removed as per unified strategy
                         Forms\Components\TextInput::make('basic_salary')
                             ->numeric()
@@ -74,16 +87,16 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Employee Name')
+                    ->label(__('Employee Name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('department.name')
-                    ->label('Department')
+                    ->label(__('Department'))
                     ->searchable()
                     ->sortable(),
                 // Role Type column removed
                 Tables\Columns\IconColumn::make('face_descriptor')
-                    ->label('Face Registered')
+                    ->label(__('Face Registered'))
                     ->boolean()
                     ->getStateUsing(fn ($record) => !empty($record->face_descriptor))
                     ->trueIcon('heroicon-o-check-circle')
@@ -94,28 +107,77 @@ class EmployeeResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('department')
                     ->relationship('department', 'name'),
+                Tables\Filters\TernaryFilter::make('status')
+                    ->label(__('Status'))
+                    ->placeholder(__('All Employees'))
+                    ->trueLabel(__('Resigned'))
+                    ->falseLabel(__('Active'))
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('resignation_date'),
+                        false: fn (Builder $query) => $query->whereNull('resignation_date'),
+                        blank: fn (Builder $query) => $query,
+                    ),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                
+                // Resign Action
+                Tables\Actions\Action::make('resign')
+                    ->label(__('Resign'))
+                    ->icon('heroicon-o-user-minus')
+                    ->color('danger')
+                    ->visible(fn (Employee $record) => is_null($record->resignation_date))
+                    ->form([
+                        Forms\Components\DatePicker::make('resignation_date')
+                            ->label(__('Resignation Date'))
+                            ->default(now())
+                            ->required(),
+                    ])
+                    ->action(function (Employee $record, array $data) {
+                        $record->update(['resignation_date' => $data['resignation_date']]);
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Employee Resigned'))
+                            ->success()
+                            ->send();
+                    }),
+
+                // Rehire Action
+                Tables\Actions\Action::make('rehire')
+                    ->label(__('Rehire'))
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->visible(fn (Employee $record) => !is_null($record->resignation_date))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Rehire Employee'))
+                    ->modalDescription(__('Are you sure you want to rehire this employee? Their resignation date will be cleared.'))
+                    ->action(function (Employee $record) {
+                        $record->update(['resignation_date' => null]);
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Employee Rehired'))
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\Action::make('resetFace')
-                    ->label('Reset Face ID')
+                    ->label(__('Reset Face ID'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
+                    ->visible(fn (Employee $record) => !empty($record->face_descriptor)) // Hide if no face ID
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->update([
                             'face_descriptor' => null,
-                            'profile_photo_path' => null // Optional: keep photo? usually clear both
+                            'profile_photo_path' => null 
                         ]);
                         \Filament\Notifications\Notification::make()
-                            ->title('Face ID Reset Successfully')
+                            ->title(__('Face ID Reset Successfully'))
                             ->success()
                             ->send();
                     })
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Delete removed to prevent accidental data loss
                 ]),
             ]);
     }

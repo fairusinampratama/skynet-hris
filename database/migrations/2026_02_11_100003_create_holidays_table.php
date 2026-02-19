@@ -13,6 +13,7 @@ return new class extends Migration
             $table->integer('year');
             $table->date('date');
             $table->string('name');
+            $table->string('type')->default('national_holiday');
             $table->timestamps();
             
             $table->unique(['date']);

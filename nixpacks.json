@@ -1,0 +1,61 @@
+{
+    "providers": [
+        "php",
+        "node"
+    ],
+    "phases": {
+        "setup": {
+            "nixPkgs": [
+                "php82",
+                "composer",
+                "php82Extensions.pdo_mysql",
+                "php82Extensions.bcmath",
+                "php82Extensions.dom",
+                "php82Extensions.fileinfo",
+                "php82Extensions.mbstring",
+                "php82Extensions.gd",
+                "php82Extensions.zip",
+                "php82Extensions.intl",
+                "php82Extensions.curl",
+                "php82Extensions.xml",
+                "nodejs_20",
+                "npm-9_x",
+                "git",
+                "unzip",
+                "libpng",
+                "libjpeg",
+                "libzip",
+                "icu"
+            ],
+            "aptPkgs": [
+                "libpng-dev",
+                "libjpeg-dev",
+                "libzip-dev",
+                "unzip"
+            ]
+        },
+        "install": {
+            "cmds": [
+                "composer install --no-dev --optimize-autoloader --no-interaction",
+                "npm install"
+            ]
+        },
+        "build": {
+            "cmds": [
+                "npm run build",
+                "php artisan optimize:clear",
+                "php artisan package:discover --ansi",
+                "php artisan filament:upgrade",
+                "php artisan icons:cache",
+                "php artisan event:cache",
+                "php artisan route:cache",
+                "php artisan view:cache",
+                "rm -rf public/storage",
+                "php artisan storage:link"
+            ]
+        }
+    },
+    "start": {
+        "cmd": "php artisan optimize && php artisan serve --host=0.0.0.0 --port=$PORT"
+    }
+}

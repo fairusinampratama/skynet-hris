@@ -6,8 +6,12 @@ use Filament\Widgets\ChartWidget;
 
 class RealTimeChart extends ChartWidget
 {
-    protected static ?string $heading = 'Real-Time Attendance Status';
     protected static ?int $sort = 3;
+
+    public function getHeading(): string
+    {
+        return __('Real-Time Attendance Status');
+    }
 
     protected function getData(): array
     {
@@ -34,7 +38,7 @@ class RealTimeChart extends ChartWidget
                     'backgroundColor' => ['#4ade80', '#f87171', '#9ca3af'], // Green, Red, Gray
                 ],
             ],
-            'labels' => ['On Time', 'Late', 'Absent'],
+            'labels' => [__('On Time'), __('Late'), __('Absent')],
         ];
     }
 

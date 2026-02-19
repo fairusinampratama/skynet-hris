@@ -13,9 +13,23 @@ use Livewire\Attributes\Computed;
 class ManageSchedules extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'Shift Schedule';
-    protected static ?string $navigationGroup = 'Attendance Management'; // Group with Attendances
+    protected static ?string $slug = 'shift-schedule';
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Shift Schedule');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Attendance Management');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Shift Schedule');
+    }
 
     protected static string $view = 'filament.pages.manage-schedules';
     
@@ -119,5 +133,13 @@ class ManageSchedules extends Page
         }
         
         // Refresh? Livewire should handle re-render.
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            \App\Filament\Resources\AttendanceResource::getUrl() => __('Attendances'),
+            $this->getUrl() => $this->getTitle(),
+        ];
     }
 }

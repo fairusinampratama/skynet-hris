@@ -28,10 +28,10 @@ class LateArrivalsWidget extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Employee')
+                    ->label(__('Employee'))
                     ->description(fn ($record) => $record->employee->department->name ?? '-'),
                 Tables\Columns\TextColumn::make('late_count')
-                    ->label('Late Arrivals (This Month)')
+                    ->label(__('Late Arrivals (This Month)'))
                     ->badge()
                     ->color('danger'),
             ]);

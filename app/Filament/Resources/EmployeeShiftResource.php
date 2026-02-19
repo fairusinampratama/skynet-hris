@@ -29,18 +29,18 @@ class EmployeeShiftResource extends Resource
             ->schema([
                 Forms\Components\Select::make('employee_id')
                     ->relationship('employee.user', 'name')
-                    ->label('Employee')
+                    ->label(__('Employee'))
                     ->required()
                     ->searchable(),
                 Forms\Components\Select::make('day_of_week')
                     ->options([
-                        0 => 'Sunday',
-                        1 => 'Monday',
-                        2 => 'Tuesday',
-                        3 => 'Wednesday',
-                        4 => 'Thursday',
-                        5 => 'Friday',
-                        6 => 'Saturday',
+                        0 => __('Sunday'),
+                        1 => __('Monday'),
+                        2 => __('Tuesday'),
+                        3 => __('Wednesday'),
+                        4 => __('Thursday'),
+                        5 => __('Friday'),
+                        6 => __('Saturday'),
                     ])
                     ->required(),
                 Forms\Components\TimePicker::make('start_time')
@@ -55,19 +55,19 @@ class EmployeeShiftResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('employee.user.name')
-                    ->label('Employee')
+                    ->label(__('Employee'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('day_of_week')
                     ->formatStateUsing(fn (int $state): string => match ($state) {
-                        0 => 'Sunday',
-                        1 => 'Monday',
-                        2 => 'Tuesday',
-                        3 => 'Wednesday',
-                        4 => 'Thursday',
-                        5 => 'Friday',
-                        6 => 'Saturday',
-                        default => 'Unknown',
+                        0 => __('Sunday'),
+                        1 => __('Monday'),
+                        2 => __('Tuesday'),
+                        3 => __('Wednesday'),
+                        4 => __('Thursday'),
+                        5 => __('Friday'),
+                        6 => __('Saturday'),
+                        default => __('Unknown'),
                     })
                     ->sortable(),
                 TextColumn::make('start_time')->time(),
@@ -78,13 +78,13 @@ class EmployeeShiftResource extends Resource
                     ->relationship('employee.user', 'name'),
                 Tables\Filters\SelectFilter::make('day_of_week')
                     ->options([
-                        0 => 'Sunday',
-                        1 => 'Monday',
-                        2 => 'Tuesday',
-                        3 => 'Wednesday',
-                        4 => 'Thursday',
-                        5 => 'Friday',
-                        6 => 'Saturday',
+                        0 => __('Sunday'),
+                        1 => __('Monday'),
+                        2 => __('Tuesday'),
+                        3 => __('Wednesday'),
+                        4 => __('Thursday'),
+                        5 => __('Friday'),
+                        6 => __('Saturday'),
                     ]),
             ])
             ->actions([
