@@ -4,7 +4,6 @@
 [phases.setup]
 nixPkgs = [
     "php82",
-    "php82Packages.composer",
     "php82Extensions.pdo_mysql",
     "php82Extensions.bcmath",
     "php82Extensions.sockets",
@@ -25,6 +24,7 @@ nixPkgs = [
 
 [phases.install]
 cmds = [
+    "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer",
     "composer install --no-dev --optimize-autoloader --no-interaction",
     "npm install"
 ]
