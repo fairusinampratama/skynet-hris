@@ -1,0 +1,38 @@
+# Nixpacks Configuration for Skynet HRIS
+# Based on proven setup from skynet-ebilling and skynet-customer-health
+
+[phases.setup]
+nixPkgs = [
+    "php82",
+    "php82Packages.composer",
+    "php82Extensions.pdo_mysql",
+    "php82Extensions.bcmath",
+    "php82Extensions.sockets",
+    "php82Extensions.xml",
+    "php82Extensions.mbstring",
+    "php82Extensions.ctype",
+    "php82Extensions.curl",
+    "php82Extensions.dom",
+    "php82Extensions.fileinfo",
+    "php82Extensions.filter",
+    "php82Extensions.tokenizer",
+    "php82Extensions.gd",
+    "php82Extensions.zip",
+    "php82Extensions.intl",
+    "nodejs_20",
+    "npm-9_x"
+]
+
+[phases.install]
+cmds = [
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    "npm install"
+]
+
+[phases.build]
+cmds = [
+    "npm run build"
+]
+
+[start]
+cmd = "sh deploy.sh"
