@@ -141,6 +141,13 @@
                 },
 
                 async startSystem() {
+                    // Check for Secure Context (HTTPS)
+                    if (!window.isSecureContext) {
+                        this.error = 'Secure Context (HTTPS) is required for camera access. Please use HTTPS.';
+                        this.isLoading = false;
+                        return;
+                    }
+
                     this.video = this.$refs.video; // Ensure video ref is set
                     this.isLoading = true;
                     this.status = 'Loading AI Models...';

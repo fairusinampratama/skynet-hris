@@ -365,6 +365,16 @@
 
         // 3. Start Camera & Face API
         async function startSystem() {
+            // Check for Secure Context (HTTPS)
+            if (!window.isSecureContext) {
+                if (statusDiv) {
+                    statusDiv.innerText = "HTTPS Required";
+                    statusDiv.className = "absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm shadow-lg";
+                }
+                alert("Face recognition requires a secure connection (HTTPS). Please contact your administrator.");
+                return;
+            }
+
             try {
                 if (typeof faceapi === 'undefined') {
                     await new Promise(resolve => {
