@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Attendance;
 use App\Models\Department;
 use App\Models\Holiday;
+use App\Models\LeaveRequest;
 use Carbon\Carbon;
 
 use Livewire\Attributes\Computed;
@@ -88,10 +89,38 @@ class AttendanceCalendar extends Page
             $holidayMap[$day] = $h;
         }
 
+        // Fetch Approved Leave Requests
+        $leaveRequests = LeaveRequest::where('status', 'approved')
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+                  ->orWhereBetween('end_date', [$start->toDateString(), $end->toDateString()])
+                  ->orWhere(function ($q2) use ($start, $end) {
+                      $q2->where('start_date', '<=', $start->toDateString())
+                         ->where('end_date', '>=', $end->toDateString());
+                  });
+            })
+            ->get();
+
+        // Map: user_id -> day (int) -> leave request record
+        $leaveMap = [];
+        foreach ($leaveRequests as $lr) {
+            $lrStart = Carbon::parse($lr->start_date);
+            $lrEnd = Carbon::parse($lr->end_date);
+            
+            // Loop through each day of the leave request
+            for ($d = $lrStart->copy(); $d->lte($lrEnd); $d->addDay()) {
+                // Only map if the day falls within the current viewed month
+                if ($d->month === (int)$this->month && $d->year === (int)$this->year) {
+                    $leaveMap[$lr->user_id][$d->day] = $lr;
+                }
+            }
+        }
+
         return [
             'employees' => $employees,
             'attendanceMap' => $attendanceMap,
             'holidays' => $holidayMap,
+            'leaveMap' => $leaveMap,
         ];
     }
 

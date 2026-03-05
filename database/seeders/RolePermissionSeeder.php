@@ -14,16 +14,14 @@ class RolePermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Roles
-        $superAdmin = Role::create(['name' => 'Super Admin']);
-        $hrManager = Role::create(['name' => 'HR Manager']);
-        $staff = Role::create(['name' => 'Staff']);
-        $technician = Role::create(['name' => 'Technician']);
+        $admin = Role::firstOrCreate(['name' => 'Admin']);
+        $staff = Role::firstOrCreate(['name' => 'Staff']);
 
         // Create Permissions (Basic examples)
-        Permission::create(['name' => 'view_all_attendance']);
-        Permission::create(['name' => 'manage_payroll']);
+        Permission::firstOrCreate(['name' => 'view_all_attendance']);
+        Permission::firstOrCreate(['name' => 'manage_payroll']);
         
         // Assign Permissions
-        $hrManager->givePermissionTo(['view_all_attendance', 'manage_payroll']);
+        $admin->givePermissionTo(['view_all_attendance', 'manage_payroll']);
     }
 }

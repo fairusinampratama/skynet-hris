@@ -4,6 +4,7 @@
         $employees = $data['employees'];
         $scheduleMap = $data['map'];
         $holidays = $data['holidays'] ?? [];
+        $leaveMap = $data['leaveMap'] ?? [];
     @endphp
 
     <div style="height: calc(100vh - 11rem); overflow: hidden;" class="flex flex-col gap-4">
@@ -29,6 +30,10 @@
                 <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <div class="w-6 h-6 flex items-center justify-center rounded bg-green-100 dark:bg-green-900/30"><x-heroicon-m-check class="w-4 h-4 text-green-600 dark:text-green-400" /></div>
                     <span>ON</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <div class="w-6 h-6 flex items-center justify-center rounded bg-purple-100 dark:bg-purple-900/30"><x-heroicon-m-document-text class="w-4 h-4 text-purple-600 dark:text-purple-400" /></div>
+                    <span>Izin</span>
                 </div>
                 <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400 pl-4 border-l border-gray-200 dark:border-gray-700">
                     <div class="w-6 h-6 flex items-center justify-center rounded bg-blue-100 dark:bg-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-700"><span class="text-[10px] font-bold text-blue-700 dark:text-blue-300">{{ now()->day }}</span></div>
@@ -71,9 +76,15 @@
                             @foreach($this->days as $date)
                                 @php
                                     $day = $date->day; $schedule = $scheduleMap[$employee->id][$day] ?? null;
+                                    $leave = $leaveMap[$employee->user_id][$day] ?? null;
                                     $isSunday = $date->dayOfWeek === \Carbon\Carbon::SUNDAY; $isToday = $date->isToday();
                                     $holiday = $holidays[$day] ?? null; $isHoliday = $holiday !== null;
-                                    if ($schedule) {
+                                    $clickable = true;
+
+                                    if ($leave) {
+                                        $icon = 'heroicon-m-document-text'; $color = 'text-purple-600 dark:text-purple-400'; $cellStyle = 'background-color:#faf5ff;'; $tooltip = "Izin: {$leave->type}";
+                                        $clickable = false;
+                                    } elseif ($schedule) {
                                         if ($schedule->is_off) { $icon = 'heroicon-m-x-mark'; $color = 'text-red-600 dark:text-red-400'; $cellStyle = 'background-color:#fee2e2;'; $tooltip = 'OFF'; }
                                         else { $icon = 'heroicon-m-check'; $color = 'text-green-600 dark:text-green-400'; $cellStyle = 'background-color:#dcfce7;'; $tooltip = 'ON (Custom)'; }
                                     } else {
@@ -83,10 +94,13 @@
                                         else { $cellStyle = 'background-color:#ffffff;'; $tooltip = 'Default (08:00 - 17:00)'; }
                                     }
                                     $ring = $isToday ? 'ring-1 ring-inset ring-blue-200 dark:ring-blue-700' : '';
+                                    
+                                    $clickAttr = $clickable ? "wire:click=\"toggleDay({$employee->id}, '{$date->format('Y-m-d')}')\"" : "";
+                                    $cursorStyle = $clickable ? 'cursor-pointer hover:brightness-95 dark:hover:brightness-110' : 'cursor-not-allowed opacity-80';
                                 @endphp
-                                <td wire:key="cell-{{ $employee->id }}-{{ $date->format('Y-m-d') }}" wire:click="toggleDay({{ $employee->id }}, '{{ $date->format('Y-m-d') }}')"
-                                    class="px-1 py-1 text-center border-r border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-all duration-75 select-none {{ $ring }} hover:brightness-95 dark:hover:brightness-110 h-12" style="{{ $cellStyle }}" title="{{ $tooltip }}">
-                                    <div class="flex items-center justify-center w-full h-full" wire:loading.class="opacity-50" wire:target="toggleDay({{ $employee->id }}, '{{ $date->format('Y-m-d') }}')">
+                                <td wire:key="cell-{{ $employee->id }}-{{ $date->format('Y-m-d') }}" {!! $clickAttr !!}
+                                    class="px-1 py-1 text-center border-r border-b border-gray-100 dark:border-gray-800 transition-all duration-75 select-none {{ $ring }} {{ $cursorStyle }} h-12" style="{{ $cellStyle }}" title="{{ $tooltip }}">
+                                    <div class="flex items-center justify-center w-full h-full" {!! $clickable ? "wire:loading.class=\"opacity-50\" wire:target=\"toggleDay({$employee->id}, '{$date->format('Y-m-d')}')\"" : "" !!}>
                                         @if($icon)<x-icon name="{{ $icon }}" class="w-5 h-5 {{ $color }} font-bold" />
                                         @elseif(!$isHoliday && !$isSunday)<div class="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></div>@endif
                                     </div>

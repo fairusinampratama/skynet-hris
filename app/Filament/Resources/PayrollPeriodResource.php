@@ -25,6 +25,11 @@ class PayrollPeriodResource extends Resource
         return __('Payroll');
     }
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRole('Admin') ?? false;
+    }
+
     public static function getModelLabel(): string
     {
         return __('Payroll Period');
@@ -70,6 +75,7 @@ class PayrollPeriodResource extends Resource
                 TextColumn::make('year')->label(__('Year')),
                 TextColumn::make('status')
                     ->label(__('Status'))
+                    ->formatStateUsing(fn (string $state): string => __(ucfirst($state)))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
@@ -148,6 +154,13 @@ class PayrollPeriodResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            PayrollPeriodResource\RelationManagers\PayrollsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

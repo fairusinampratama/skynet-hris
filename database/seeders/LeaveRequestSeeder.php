@@ -14,28 +14,29 @@ class LeaveRequestSeeder extends Seeder
     public function run(): void
     {
         $faker = \Faker\Factory::create('id_ID');
-        $leaveTypes = DB::table('leave_types')->get();
-        $annualLeaveId = $leaveTypes->firstWhere('name', 'Annual Leave')?->id;
-        $sickLeaveId = $leaveTypes->firstWhere('name', 'Sick Leave')?->id;
-        $unpaidLeaveId = $leaveTypes->firstWhere('name', 'Unpaid Leave')?->id;
+
+        // Static Types to match Filament Options
+        $pribadiId = 'Izin Keperluan Pribadi';
+        $sickLeaveId = 'Izin Sakit';
+        $telatId = 'Izin Telat'; 
 
         // Get staff users (excluding admins)
         $users = User::role('Staff')->get();
 
         $reasons = [
-            'annual' => [
-                'Acara keluarga', 'Liburan keluarga', 'Urusan pribadi',
+            'pribadi' => [
+                'Acara keluarga', 'Urusan pribadi mendesak',
                 'Menghadiri pernikahan', 'Renovasi rumah', 'Pulang kampung',
-                'Perpanjang SIM', 'Urusan administrasi', 'Rekreasi',
+                'Perpanjang SIM', 'Urusan administrasi',
             ],
             'sick' => [
                 'Demam dan flu', 'Sakit gigi', 'Kontrol ke dokter',
                 'Sakit perut', 'Migrain berat', 'Cedera ringan',
                 'Alergi parah', 'Cek laboratorium',
             ],
-            'unpaid' => [
-                'Urusan mendesak keluarga', 'Keperluan darurat',
-                'Masalah pribadi yang harus diselesaikan',
+            'telat' => [
+                'Ban bocor di jalan', 'Macet parah karena kecelakaan',
+                'Motor mogok', 'Hujan badai',
             ],
         ];
 
@@ -44,17 +45,17 @@ class LeaveRequestSeeder extends Seeder
             $numRequests = $faker->numberBetween(2, 4);
 
             for ($i = 0; $i < $numRequests; $i++) {
-                // Random leave type weighted: 60% annual, 30% sick, 10% unpaid
+                // Random leave type weighted: 40% pribadi, 40% sick, 20% telat
                 $roll = $faker->numberBetween(1, 100);
-                if ($roll <= 60) {
-                    $typeId = $annualLeaveId;
-                    $typeKey = 'annual';
-                } elseif ($roll <= 90) {
+                if ($roll <= 40) {
+                    $typeId = $pribadiId;
+                    $typeKey = 'pribadi';
+                } elseif ($roll <= 80) {
                     $typeId = $sickLeaveId;
                     $typeKey = 'sick';
                 } else {
-                    $typeId = $unpaidLeaveId;
-                    $typeKey = 'unpaid';
+                    $typeId = $telatId;
+                    $typeKey = 'telat';
                 }
 
                 if (!$typeId) continue;
@@ -76,26 +77,16 @@ class LeaveRequestSeeder extends Seeder
 
                 LeaveRequest::create([
                     'user_id' => $user->id,
-                    'leave_type_id' => $typeId,
+                    'type' => $typeId,
                     'start_date' => $start->toDateString(),
                     'end_date' => $end->toDateString(),
                     'reason' => $faker->randomElement($reasons[$typeKey]),
                     'attachment_path' => $typeKey === 'sick' ? 'attachments/surat-dokter-' . $faker->numberBetween(1, 100) . '.pdf' : null,
                     'status' => $status,
-                    'rejection_reason' => $status === 'rejected' ? $faker->randomElement(['Jadwal bentrok dengan proyek', 'Kuota cuti habis', 'Periode sibuk']) : null,
+                    'rejection_reason' => $status === 'rejected' ? $faker->randomElement(['Banyak pekerjaan', 'Alasan kurang kuat', 'Periode sibuk']) : null,
                     'created_at' => $start->copy()->subDays($faker->numberBetween(1, 7)),
                     'updated_at' => $start->copy()->subDays($faker->numberBetween(0, 3)),
                 ]);
-
-                // Deduct leave balance for approved annual leave
-                if ($status === 'approved' && $typeKey === 'annual') {
-                    $balance = LeaveBalance::where('user_id', $user->id)
-                        ->where('leave_type_id', $annualLeaveId)
-                        ->first();
-                    if ($balance && $balance->remaining_days > 0) {
-                        $balance->decrement('remaining_days', min($duration, $balance->remaining_days));
-                    }
-                }
             }
         }
     }

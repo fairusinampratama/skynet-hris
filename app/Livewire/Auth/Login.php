@@ -17,6 +17,16 @@ class Login extends Component
         'password' => 'required',
     ];
 
+    public function mount()
+    {
+        if (Auth::check()) {
+            if (Auth::user()->hasRole('Admin')) {
+                return redirect('/admin');
+            }
+            return redirect()->route('attendance');
+        }
+    }
+
     public function login()
     {
         $this->validate();
@@ -24,7 +34,13 @@ class Login extends Component
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
             session()->regenerate();
 
-            return redirect()->intended(route('attendance'));
+            if (Auth::user()->hasRole('Admin')) {
+                return redirect()->intended('/admin');
+            }
+
+            // Always redirect staff to attendance, never use intended() to avoid
+            // stale /admin session cookies pulling staff into the admin panel.
+            return redirect()->route('attendance');
         }
 
         $this->addError('email', 'The provided credentials do not match our records.');

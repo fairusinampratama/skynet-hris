@@ -26,7 +26,6 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
             ->brandLogo(fn () => view('filament.admin.logo'))
             ->brandName('Skynet HRIS')
             ->colors([

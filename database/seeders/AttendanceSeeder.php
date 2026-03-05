@@ -81,18 +81,17 @@ class AttendanceSeeder extends Seeder
                             $minute = $hour === 7 ? $faker->numberBetween(30, 59) : $faker->numberBetween(0, 45);
                             break;
                         case 'average':
-                            // 07:45 - 09:15 (sometimes late)
+                            // 07:45 - 09:15 (sometimes late > 15m)
                             $hour = $faker->randomElement([7, 8, 8, 8, 9]);
                             $minute = $faker->numberBetween(0, 59);
                             if ($hour === 7) $minute = $faker->numberBetween(45, 59);
-                            if ($hour === 9) $minute = $faker->numberBetween(0, 15);
+                            if ($hour === 9) $minute = $faker->numberBetween(0, 30);
                             break;
                         case 'problematic':
-                            // 08:30 - 09:45 (frequently late)
-                            $hour = $faker->randomElement([8, 9, 9, 9]);
+                            // 08:30 - 11:30 (frequently very late, triggering >60m absence)
+                            $hour = $faker->randomElement([8, 9, 9, 10, 11]);
                             $minute = $faker->numberBetween(0, 59);
                             if ($hour === 8) $minute = $faker->numberBetween(30, 59);
-                            if ($hour === 9) $minute = $faker->numberBetween(0, 45);
                             break;
                     }
 

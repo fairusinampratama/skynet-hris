@@ -24,7 +24,7 @@ class User extends Authenticatable implements FilamentUser
         // We should replicate that logic.
         
         if ($panel->getId() === 'admin') {
-             return $this->hasRole(['Super Admin', 'HR Manager']);
+             return $this->hasRole('Admin');
         }
         
         return true;

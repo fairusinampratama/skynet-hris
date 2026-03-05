@@ -26,6 +26,8 @@
         .total-row td { font-weight: bold; background-color: #f9f9f9; }
         .net-salary { font-size: 14px; background-color: #e8f5e9; }
         
+        .item-formula { display: block; font-size: 10px; color: #777; margin-top: 3px; font-weight: normal; }
+
         .footer { margin-top: 50px; width: 100%; }
         .signature { text-align: center; width: 200px; float: right; }
         .signature-line { border-top: 1px solid #333; margin-top: 60px; }
@@ -36,9 +38,27 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            @if($company && $company->logo_path)
-                <!-- Assuming logo is stored in public disk, access via absolute path for DomPDF -->
-                <img src="{{ storage_path('app/public/' . $company->logo_path) }}" class="logo" alt="Logo">
+            @php
+                $logoUrl = null;
+                if ($company && $company->logo_path) {
+                    $logoUrl = storage_path('app/public/' . $company->logo_path);
+                } else {
+                    // Fallback logo if standard file doesn't exist.
+                    $logoUrl = storage_path('app/public/logo.png');
+                    if (!file_exists($logoUrl)) {
+                        $logoUrl = public_path('images/logo.png');
+                    }
+                    if (!file_exists($logoUrl)) {
+                        $logoUrl = public_path('favicon.png'); 
+                    }
+                    if (!file_exists($logoUrl)) {
+                        $logoUrl = public_path('favicon.svg'); 
+                    }
+                }
+            @endphp
+            
+            @if(file_exists($logoUrl))
+                <img src="{{ $logoUrl }}" class="logo" alt="Logo">
             @endif
             
             <div class="company-info">
@@ -93,8 +113,24 @@
                     <!-- Skip Basic Salary as it's already shown -->
                     @if($item->name === 'Gaji Pokok') @continue @endif
                     
+                    @php
+                        // Split the item string to extract formulas in parentheses to a subtitle
+                        $title = $item->name;
+                        $formula = '';
+                        if (str_contains($item->name, ' (')) {
+                            $parts = explode(' (', $item->name, 2);
+                            $title = $parts[0];
+                            $formula = '(' . $parts[1]; // reattach the parens
+                        }
+                    @endphp
+
                     <tr>
-                        <td>{{ $item->name }}</td>
+                        <td>
+                            {{ $title }}
+                            @if($formula)
+                                <span class="item-formula">{{ $formula }}</span>
+                            @endif
+                        </td>
                         @if($item->type === 'earning')
                             @php $totalEarnings += $item->amount; @endphp
                             <td class="amount">{{ number_format($item->amount, 0, ',', '.') }}</td>
@@ -106,6 +142,15 @@
                         @endif
                     </tr>
                 @endforeach
+
+                @if($payroll->bonus > 0)
+                    @php $totalEarnings += $payroll->bonus; @endphp
+                    <tr>
+                        <td>Bonus</td>
+                        <td class="amount">{{ number_format($payroll->bonus, 0, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                @endif
                 
                 <!-- Totals -->
                 <tr class="total-row">

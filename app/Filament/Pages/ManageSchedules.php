@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use App\Models\Employee;
 use App\Models\Schedule;
+use App\Models\LeaveRequest;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 
@@ -93,10 +94,38 @@ class ManageSchedules extends Page
             $holidayMap[$day] = $h; // Store the whole Holiday object
         }
 
+        // Fetch Approved Leave Requests
+        $leaveRequests = LeaveRequest::where('status', 'approved')
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+                  ->orWhereBetween('end_date', [$start->toDateString(), $end->toDateString()])
+                  ->orWhere(function ($q2) use ($start, $end) {
+                      $q2->where('start_date', '<=', $start->toDateString())
+                         ->where('end_date', '>=', $end->toDateString());
+                  });
+            })
+            ->get();
+
+        // Map: user_id -> day (int) -> leave request record
+        $leaveMap = [];
+        foreach ($leaveRequests as $lr) {
+            $lrStart = Carbon::parse($lr->start_date);
+            $lrEnd = Carbon::parse($lr->end_date);
+            
+            // Loop through each day of the leave request
+            for ($d = $lrStart->copy(); $d->lte($lrEnd); $d->addDay()) {
+                // Only map if the day falls within the current viewed month
+                if ($d->month === (int)$this->month && $d->year === (int)$this->year) {
+                    $leaveMap[$lr->user_id][$d->day] = $lr;
+                }
+            }
+        }
+
         return [
             'employees' => $employees,
             'map' => $scheduleMap,
-            'holidays' => $holidayMap
+            'holidays' => $holidayMap,
+            'leaveMap' => $leaveMap
         ];
     }
 
@@ -104,6 +133,26 @@ class ManageSchedules extends Page
     {
         // $dateString is already Y-m-d
         \Illuminate\Support\Facades\Log::info("Toggling day for Emp: $employeeId, Date: $dateString");
+        
+        $employee = Employee::find($employeeId);
+        
+        // Safety Check: Do not allow toggling if there is an approved Leave Request
+        if ($employee) {
+            $hasLeave = LeaveRequest::where('user_id', $employee->user_id)
+                ->where('status', 'approved')
+                ->whereDate('start_date', '<=', $dateString)
+                ->whereDate('end_date', '>=', $dateString)
+                ->exists();
+                
+            if ($hasLeave) {
+                Notification::make()
+                    ->title(__('Cannot modify schedule'))
+                    ->body(__('Employee is on approved leave (Izin) this day.'))
+                    ->warning()
+                    ->send();
+                return;
+            }
+        }
         
         $schedule = Schedule::where('employee_id', $employeeId)
             ->where('date', $dateString)

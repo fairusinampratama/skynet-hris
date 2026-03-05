@@ -36,11 +36,16 @@ class LeaveRequestResource extends Resource
                     ->label(__('User'))
                     ->relationship('user', 'name')
                     ->disabled(),
-                Forms\Components\Select::make('leave_type_id')
+                Forms\Components\Select::make('type')
                     ->label(__('Leave Type'))
-                    ->relationship('leaveType', 'name')
-                    ->disabled(),
-                Forms\Components\DatePicker::make('start_date')->label(__('Start Date'))->disabled(),
+                    ->options([
+                        'Izin Sakit' => 'Izin Sakit',
+                        'Izin Telat' => 'Izin Telat',
+                        'Izin Keperluan Pribadi' => 'Izin Keperluan Pribadi',
+                    ])
+                    ->required()
+                    ->disabled(fn (string $operation): bool => $operation !== 'create'),
+                Forms\Components\DatePicker::make('start_date')->label(__('Start Date'))->disabled(fn (string $operation): bool => $operation !== 'create'),
                 Forms\Components\DatePicker::make('end_date')->label(__('End Date'))->disabled(),
                 Forms\Components\Textarea::make('reason')->label(__('Reason'))->disabled(),
                 Forms\Components\FileUpload::make('attachment_path')
@@ -67,11 +72,12 @@ class LeaveRequestResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('user.name')->label(__('User'))->searchable(),
-                TextColumn::make('leaveType.name')->label(__('Leave Type')),
+                TextColumn::make('type')->label(__('Leave Type')),
                 TextColumn::make('start_date')->label(__('Start Date'))->date(),
                 TextColumn::make('end_date')->label(__('End Date'))->date(),
                 TextColumn::make('status')
                     ->label(__('Status'))
+                    ->formatStateUsing(fn (string $state): string => __(ucfirst($state)))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',

@@ -18,11 +18,18 @@ class PayrollResource extends Resource
 {
     protected static ?string $model = Payroll::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
     
     public static function getNavigationGroup(): ?string
     {
         return __('Payroll');
+    }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRole('Admin') ?? false;
     }
 
     public static function getModelLabel(): string
@@ -47,7 +54,22 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('basic_salary')->label(__('Basic Salary'))->disabled(),
                 Forms\Components\TextInput::make('total_allowances')->label(__('Total Allowances'))->disabled(),
                 Forms\Components\TextInput::make('total_deductions')->label(__('Total Deductions'))->disabled(),
-                Forms\Components\TextInput::make('net_salary')->label(__('Net Salary'))->disabled(),
+                Forms\Components\TextInput::make('bonus')
+                    ->label(__('Bonus'))
+                    ->numeric()
+                    ->default(0)
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                        $basic = (float) $get('basic_salary');
+                        $allowances = (float) $get('total_allowances');
+                        $deductions = (float) $get('total_deductions');
+                        $bonus = (float) $state;
+                        $set('net_salary', round($basic + $allowances + $bonus - $deductions, 0));
+                    }),
+                Forms\Components\TextInput::make('net_salary')
+                    ->label(__('Net Salary'))
+                    ->disabled()
+                    ->dehydrated(),
             ]);
     }
 
@@ -59,6 +81,7 @@ class PayrollResource extends Resource
                      ->formatStateUsing(fn ($state) => \Carbon\Carbon::create(null, $state)->translatedFormat('F'))
                      ->label(__('Month')),
                 TextColumn::make('employee.user.name')->label(__('Employee'))->searchable(),
+                TextColumn::make('bonus')->label(__('Bonus'))->money('IDR')->sortable(),
                 TextColumn::make('net_salary')->label(__('Net Salary'))->money('IDR'),
                 Tables\Columns\IconColumn::make('wa_sent_at')
                     ->label(__('Sent WA'))

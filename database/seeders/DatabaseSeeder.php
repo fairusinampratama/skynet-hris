@@ -17,10 +17,22 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
 
             // 3. Configuration
-            LeaveTypeSeeder::class,
             HolidaySeeder::class,
-            
-            // Note: Department, Employee, Attendance, Schedule, Payroll seeders are for demo only and have been disabled.
+
+            // 4. Organizational Structure
+            DepartmentSeeder::class,
+            EmployeeSeeder::class,
+
+            // 5. Shift & Scheduling
+            DefaultShiftSeeder::class,
+            ScheduleSeeder::class,
+
+            // 6. Day-to-Day Operations
+            LeaveRequestSeeder::class,
+            AttendanceSeeder::class,
+
+            // 7. Compensation
+            PayrollSeeder::class,
         ]);
     }
 }

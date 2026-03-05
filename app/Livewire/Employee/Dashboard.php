@@ -3,7 +3,7 @@
 namespace App\Livewire\Employee;
 
 use App\Models\Attendance;
-use App\Models\LeaveBalance;
+use App\Models\LeaveRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -27,9 +27,12 @@ class Dashboard extends Component
             $status = $todayAttendance->check_out_time ? 'checked_out' : 'checked_in';
         }
 
-        // 2. Leave Balance
-        $leaveBalance = LeaveBalance::where('user_id', $user->id)
-            ->sum('remaining_days'); // Summing just in case multiple types, though usually 1 record per type
+        // 2. Leave Balance (derived from approved leave requests this year)
+        $leaveDaysTaken = \App\Models\LeaveRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereYear('start_date', Carbon::now()->year)
+            ->get()
+            ->sum(fn ($req) => $req->start_date->diffInDays($req->end_date) + 1);
 
         // 3. Recent Activity (Last 5 attendances)
         $recentActivity = Attendance::where('user_id', $user->id)
@@ -41,7 +44,7 @@ class Dashboard extends Component
             'user' => $user,
             'status' => $status,
             'todayAttendance' => $todayAttendance,
-            'leaveBalance' => $leaveBalance,
+            'leaveBalance' => $leaveDaysTaken,
             'recentActivity' => $recentActivity,
         ]);
     }

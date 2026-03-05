@@ -66,32 +66,6 @@ class ManageCompanySettings extends Page
                                     ->required(),
                             ]),
                     ]),
-
-                Forms\Components\Section::make(__('Payroll Settings'))
-                    ->description(__('Configure fixed allowances and deductions used in payroll calculation.'))
-                    ->schema([
-                        Forms\Components\Grid::make(3)
-                            ->schema([
-                                Forms\Components\TextInput::make('transport_allowance')
-                                    ->label(__('Transport Allowance (Rp)'))
-                                    ->numeric()
-                                    ->default(400000)
-                                    ->required()
-                                    ->helperText(__('Fixed monthly transport allowance per employee.')),
-                                Forms\Components\TextInput::make('meal_allowance')
-                                    ->label(__('Meal Allowance (Rp)'))
-                                    ->numeric()
-                                    ->default(500000)
-                                    ->required()
-                                    ->helperText(__('Fixed monthly meal allowance per employee.')),
-                                Forms\Components\TextInput::make('late_fine_per_day')
-                                    ->label(__('Late Fine per Day (Rp)'))
-                                    ->numeric()
-                                    ->default(50000)
-                                    ->required()
-                                    ->helperText(__('Deducted for each day employee arrives late.')),
-                            ]),
-                    ]),
             ])
             ->statePath('data');
     }

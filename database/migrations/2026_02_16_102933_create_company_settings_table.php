@@ -20,11 +20,6 @@ return new class extends Migration
             $table->decimal('office_long', 11, 8)->default(112.768845);
             $table->integer('radius_meters')->default(100);
             
-            // Payroll Settings
-            $table->unsignedInteger('transport_allowance')->default(400000);
-            $table->unsignedInteger('meal_allowance')->default(500000);
-            $table->unsignedInteger('late_fine_per_day')->default(50000);
-            
             $table->timestamps();
         });
     }

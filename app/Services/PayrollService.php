@@ -47,11 +47,8 @@ class PayrollService
 
         $basicSalary = (float) $employee->basic_salary;
 
-        // Load company settings (with defaults matching old hardcoded values)
+        // Load company settings
         $settings = \App\Models\CompanySetting::first();
-        $transportAllowance = (int) ($settings->transport_allowance ?? 400000);
-        $mealAllowance      = (int) ($settings->meal_allowance ?? 500000);
-        $lateFinePerDay     = (int) ($settings->late_fine_per_day ?? 50000);
 
         // 1. Get working days in the period month
         $daysInMonth = \Carbon\Carbon::create($period->year, $period->month)->daysInMonth;
@@ -62,68 +59,94 @@ class PayrollService
             ->whereYear('date', $period->year)
             ->get();
 
-        // 3. Calculate late fines
-        $lateDays = $attendances->where('is_late', true)->count();
-        $lateFineAmount = $lateDays * $lateFinePerDay;
+        // 3. New Deductions logic (Lateness and Absence)
+        $absentDays = 0;
+        $lateDays = 0;
+        $lateFineAmount = 0;
+        $lateMoreThanHourDays = 0;
 
-        // 4. Unpaid leave deduction (pro-rate daily salary for approved Cuti Tanpa Gaji)
-        $unpaidLeaveType = \App\Models\LeaveType::where('name', 'Cuti Tanpa Gaji')->first();
-        $unpaidLeaveDays = 0;
-        $unpaidLeaveAmount = 0;
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $date = \Carbon\Carbon::create($period->year, $period->month, $i);
 
-        if ($unpaidLeaveType) {
-            $unpaidLeaveRequests = \App\Models\LeaveRequest::where('user_id', $employee->user_id)
-                ->where('leave_type_id', $unpaidLeaveType->id)
-                ->where('status', 'approved')
-                ->get()
-                ->filter(function ($req) use ($period) {
-                    // Count days that fall within this payroll period
-                    $start = \Carbon\Carbon::parse($req->start_date)->max(\Carbon\Carbon::create($period->year, $period->month, 1));
-                    $end   = \Carbon\Carbon::parse($req->end_date)->min(\Carbon\Carbon::create($period->year, $period->month)->endOfMonth());
-                    return $start->lte($end);
-                });
+            // Holiday check
+            $isHoliday = \App\Models\Holiday::whereDate('date', $date)->exists();
+            if ($isHoliday) continue;
 
-            foreach ($unpaidLeaveRequests as $req) {
-                $start = \Carbon\Carbon::parse($req->start_date)->max(\Carbon\Carbon::create($period->year, $period->month, 1));
-                $end   = \Carbon\Carbon::parse($req->end_date)->min(\Carbon\Carbon::create($period->year, $period->month)->endOfMonth());
-                $unpaidLeaveDays += $start->diffInDays($end) + 1;
-            }
+            $schedule = \App\Models\Schedule::where('employee_id', $employee->id)->where('date', $date->format('Y-m-d'))->first();
+            if ($schedule && $schedule->is_off) continue;
+            if (!$schedule && $date->isSunday()) continue;
 
-            if ($unpaidLeaveDays > 0) {
-                $dailySalary = round($basicSalary / $daysInMonth, 0);
-                $unpaidLeaveAmount = $unpaidLeaveDays * $dailySalary;
+            $attendance = $attendances->first(function ($att) use ($i) {
+                return $att->date->day === $i;
+            });
+
+            if ($attendance) {
+                if ($attendance->is_late && $attendance->check_in_time) {
+                    $expectedStartTime = null;
+                    if ($schedule) {
+                        $expectedStartTime = $schedule->start_time;
+                    } else {
+                        $shift = \App\Models\EmployeeShift::where('employee_id', $employee->id)->where('day_of_week', $date->dayOfWeekIso)->first();
+                        if ($shift) {
+                            $expectedStartTime = $shift->start_time;
+                        }
+                    }
+
+                    $hasIzinTelat = \App\Models\LeaveRequest::where('user_id', $employee->user_id)
+                        ->where('status', 'approved')
+                        ->whereDate('start_date', '<=', $date)
+                        ->whereDate('end_date', '>=', $date)
+                        ->where('type', 'Izin Telat')
+                        ->exists();
+
+                    if (!$hasIzinTelat) {
+                        if ($expectedStartTime) {
+                            $expected = \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $expectedStartTime);
+                            $actual = \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $attendance->check_in_time);
+                            $diffInMinutes = $expected->diffInMinutes($actual, false);
+
+                            if ($diffInMinutes > 60) {
+                                $lateMoreThanHourDays++;
+                            } elseif ($diffInMinutes >= 15) {
+                                $lateDays++;
+                                $lateFineAmount += 25000;
+                            }
+                        } else {
+                            $lateDays++;
+                            $lateFineAmount += 25000;
+                        }
+                    }
+                }
+            } else {
+                // Anyone absent is counted as absent, regardless of other Izins (Sakit/Pribadi)
+                // If they had Izin Telat they shouldn't be counted as absent, but if they are completely absent, they didn't clock in anyway.
+                // Thus we just count them absent.
+                $absentDays++;
             }
         }
 
-        // 5. Get approved overtime
-        $overtimeHours = OvertimeRequest::where('employee_id', $employee->id)
-            ->where('status', 'approved')
-            ->whereMonth('date', $period->month)
-            ->whereYear('date', $period->year)
-            ->sum('hours');
+        $extremeLateDeductionAmount = 0;
+        if ($lateMoreThanHourDays > 0) {
+            $rawExtremeLate = ($lateMoreThanHourDays / $daysInMonth) * $basicSalary;
+            $extremeLateDeductionAmount = floor($rawExtremeLate / 1000) * 1000;
+        }
 
-        $workHoursPerMonth  = config('payroll.work_hours_per_month', 173);
-        $overtimeMultiplier = config('payroll.overtime_multiplier', 1.5);
-        $hourlyRate         = round($basicSalary / $workHoursPerMonth, 0);
-        $overtimePay        = round($overtimeHours * $hourlyRate * $overtimeMultiplier, 0);
+        $absentDeductionAmount = 0;
+        if ($absentDays > 0) {
+            // Strictly round DOWN to the nearest 1000. E.g. 107,851 becomes 107,000.
+            $rawAmount = ($absentDays / $daysInMonth) * $basicSalary;
+            $absentDeductionAmount = floor($rawAmount / 1000) * 1000;
+        }
 
-        // 6. BPJS & tax deductions (percentage-based)
-        $bpjsHealthRate      = config('payroll.deductions.bpjs_health', 0.01);
-        $bpjsEmploymentRate  = config('payroll.deductions.bpjs_employment', 0.02);
-        $pph21Rate           = config('payroll.deductions.pph21', 0.05);
-
-        $bpjsHealthAmount     = round($basicSalary * $bpjsHealthRate, 0);
-        $bpjsEmploymentAmount = round($basicSalary * $bpjsEmploymentRate, 0);
-        $pph21Amount          = round($basicSalary * $pph21Rate, 0);
-
-        // 7. Totals
-        $totalAllowances = $transportAllowance + $mealAllowance;
-        $totalEarnings   = $basicSalary + $totalAllowances + $overtimePay;
-        $totalDeductions = $lateFineAmount + $unpaidLeaveAmount + $bpjsHealthAmount + $bpjsEmploymentAmount + $pph21Amount;
+        // 6. Totals
+        $totalAllowances = 0;
+        $totalEarnings   = $basicSalary;
+        $totalDeductions = $lateFineAmount + $absentDeductionAmount + $extremeLateDeductionAmount;
         $netSalary       = $totalEarnings - $totalDeductions;
 
         if ($netSalary < 0) {
             \Log::warning("Negative net salary for employee {$employee->id} in period {$period->id}: {$netSalary}");
+            $netSalary = 0; // ensure no negative
         }
 
         // 8. Create Payroll Record
@@ -131,31 +154,36 @@ class PayrollService
             'period_id'        => $period->id,
             'employee_id'      => $employee->id,
             'basic_salary'     => $basicSalary,
-            'total_allowances' => $totalAllowances + $overtimePay,
+            'total_allowances' => $totalAllowances,
             'total_deductions' => $totalDeductions,
             'net_salary'       => $netSalary,
+            'bonus'            => 0, // defaults to 0
         ]);
 
-        // 9. Payroll items (detailed slip)
+        // 8. Payroll items (detailed slip)
         $this->createItem($payroll, 'Gaji Pokok', $basicSalary, 'earning');
-        $this->createItem($payroll, 'Tunjangan Transport', $transportAllowance, 'earning');
-        $this->createItem($payroll, 'Tunjangan Makan', $mealAllowance, 'earning');
-
-        if ($overtimePay > 0) {
-            $this->createItem($payroll, "Lembur ({$overtimeHours} jam @ " . number_format($hourlyRate * $overtimeMultiplier, 0) . "/jam)", $overtimePay, 'earning');
-        }
 
         if ($lateFineAmount > 0) {
-            $this->createItem($payroll, "Potongan Keterlambatan ({$lateDays} hari)", $lateFineAmount, 'deduction');
+            $this->createItem($payroll, "Potongan Keterlambatan ({$lateDays} hari x Rp 25.000)", $lateFineAmount, 'deduction');
         }
 
-        if ($unpaidLeaveAmount > 0) {
-            $this->createItem($payroll, "Potongan Cuti Tanpa Gaji ({$unpaidLeaveDays} hari)", $unpaidLeaveAmount, 'deduction');
+        if ($extremeLateDeductionAmount > 0) {
+            $basicRupiah = number_format($basicSalary, 0, ',', '.');
+            $dailyRateRaw = $basicSalary / $daysInMonth;
+            $dailyRateRounded = floor($dailyRateRaw / 1000) * 1000;
+            $dailyRupiah = number_format($dailyRateRounded, 0, ',', '.');
+            
+            $this->createItem($payroll, "Potongan Keterlambatan > 1 Jam ({$lateMoreThanHourDays} hari / {$daysInMonth} hari kerja x Rp {$basicRupiah} = Rp {$dailyRupiah} / hari)", $extremeLateDeductionAmount, 'deduction');
         }
 
-        $this->createItem($payroll, 'BPJS Kesehatan (' . ($bpjsHealthRate * 100) . '%)', $bpjsHealthAmount, 'deduction');
-        $this->createItem($payroll, 'BPJS Ketenagakerjaan (' . ($bpjsEmploymentRate * 100) . '%)', $bpjsEmploymentAmount, 'deduction');
-        $this->createItem($payroll, 'PPh 21 (' . ($pph21Rate * 100) . '%)', $pph21Amount, 'deduction');
+        if ($absentDeductionAmount > 0) {
+            $basicRupiah = number_format($basicSalary, 0, ',', '.');
+            $dailyRateRaw = $basicSalary / $daysInMonth;
+            $dailyRateRounded = floor($dailyRateRaw / 1000) * 1000;
+            $dailyRupiah = number_format($dailyRateRounded, 0, ',', '.');
+            
+            $this->createItem($payroll, "Potongan Tidak Masuk ({$absentDays} hari / {$daysInMonth} hari kerja x Rp {$basicRupiah} = Rp {$dailyRupiah} / hari)", $absentDeductionAmount, 'deduction');
+        }
 
         return $payroll;
     }

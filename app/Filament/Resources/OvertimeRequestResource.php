@@ -17,6 +17,8 @@ class OvertimeRequestResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Approvals');
@@ -61,6 +63,7 @@ class OvertimeRequestResource extends Resource
                 TextColumn::make('hours')->label(__('Hours')),
                 TextColumn::make('status')
                     ->label(__('Status'))
+                    ->formatStateUsing(fn (string $state): string => __(ucfirst($state)))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
