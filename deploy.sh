@@ -21,16 +21,6 @@ php artisan migrate --force
 
 echo "✅ Deployment tasks completed."
 
-echo "🚀 Starting services..."
-
-# Find concurrently executable
-if [ -f "./node_modules/.bin/concurrently" ]; then
-    CONCURRENTLY="./node_modules/.bin/concurrently"
-else
-    CONCURRENTLY="npx concurrently"
-fi
-
-$CONCURRENTLY -c "#93c5fd,#c4b5fd,#fb7185" \
-    "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}" \
-    "php artisan schedule:work" \
-    "php artisan queue:work --tries=3"
+# Start Supervisor which will run PHP-FPM, Nginx, Queue Worker, and Scheduler
+echo "🚀 Starting Supervisor to manage all processes..."
+exec supervisord -c /etc/supervisord.conf

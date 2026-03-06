@@ -31,7 +31,7 @@ echo "DELETING {$count} RECORD(S) for today ({$today})...\n";
 foreach ($attendances as $attendance) {
     try {
         $dateStr = $attendance->date->format('Y-m-d');
-        $attendance->delete();
+        \Illuminate\Support\Facades\DB::table('attendances')->where('id', $attendance->id)->delete();
         echo " - Deleted record for {$dateStr} (ID: {$attendance->id})\n";
     } catch (\Exception $e) {
         echo " - FAILED to delete record ID {$attendance->id}: {$e->getMessage()}\n";
