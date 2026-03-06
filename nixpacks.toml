@@ -19,7 +19,9 @@ nixPkgs = [
     "php82Extensions.zip",
     "php82Extensions.intl",
     "nodejs_20",
-    "npm-9_x",
+    "npm-9_x"
+]
+aptPkgs = [
     "nginx",
     "supervisor"
 ]
